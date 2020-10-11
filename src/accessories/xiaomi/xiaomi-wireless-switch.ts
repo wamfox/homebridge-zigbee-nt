@@ -5,7 +5,7 @@ import { Device } from 'zigbee-herdsman/dist/controller/model';
 import { ProgrammableSwitchServiceBuilder } from '../../builders/programmable-switch-service-builder';
 
 export class XiaomiWirelessSwitch extends ZigBeeAccessory {
-  protected switchServiceToggle: Service;
+  protected switchServiceOn: Service;
   protected batteryService: Service;
 
   getAvailableServices(): Service[] {
@@ -19,15 +19,18 @@ export class XiaomiWirelessSwitch extends ZigBeeAccessory {
     const ProgrammableSwitchEvent = this.platform.Characteristic.ProgrammableSwitchEvent;
   
 [
-  this.switchServiceToggle, 
+  this.this.switchServiceOn, 
   this.batteryService
 ] = builder
-      .withStatelessSwitch('ON/OFF', 'toggle', 1, [ProgrammableSwitchEvent.SINGLE_PRESS])
+      .withStatelessSwitch('ON/OFF', 1, [
+        ProgrammableSwitchEvent.SINGLE_PRESS,
+        ProgrammableSwitchEvent.LONG_PRESS,
+      ])
       .andBattery()
       .build();
 
     return [
-      this.switchServiceToggle, 
+      this.switchServiceOn, 
       this.batteryService,
     ];
   }
@@ -35,11 +38,16 @@ export class XiaomiWirelessSwitch extends ZigBeeAccessory {
   update(device: Device, state: DeviceState) {
     const ProgrammableSwitchEvent = this.platform.Characteristic.ProgrammableSwitchEvent;
     super.update(device, state);
-    switch (state.action) {
-      case 'toggle':
-        this.switchServiceToggle
+    switch (state.click) {
+      case 'on':
+        this.switchServiceOn
           .getCharacteristic(ProgrammableSwitchEvent)
           .setValue(ProgrammableSwitchEvent.SINGLE_PRESS);
+        break;
+       case 'on':
+        this.switchServiceOn
+          .getCharacteristic(ProgrammableSwitchEvent)
+          .setValue(ProgrammableSwitchEvent.LONG_PRESS);
         break;
     }
   }
